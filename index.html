@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0906; --bg-panel:#151109; --bg-card:#181309; --bg-inset:#0e0b06;
+    --key:#cf9153; --key-dim:#8a643c; --shadow-green:#7d8c53; --velvet:#8c2a2a; --velvet-bright:#c23f3f;
+    --other:#7a7266;
+    --ink:#ede6d6; --ink-dim:#a89a83; --ink-faint:#6e6353;
+    --line:#2a2213; --line-bright:#3c3018; --radius:3px;
+    --serif:'Fraunces',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; background:radial-gradient(ellipse 900px 500px at 50% -10%, rgba(207,145,83,0.08), transparent 60%), var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.5; -webkit-font-smoothing:antialiased;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none!important; animation:none!important;} html{scroll-behavior:auto;} }
+  ::selection{background:var(--key-dim); color:var(--ink);}
+
+  .hero{padding:56px 24px 36px; max-width:920px; margin:0 auto; border-bottom:1px solid var(--line);}
+  .hero-eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:0.16em; text-transform:uppercase; color:var(--key); margin-bottom:14px;}
+  .title-input{
+    font-family:var(--serif); font-weight:500; font-size:clamp(32px,5.5vw,54px); letter-spacing:-0.01em;
+    background:transparent; border:none; color:var(--ink); width:100%; padding:0; margin:0 0 8px;
+  }
+  .title-input::placeholder{color:var(--ink-faint);}
+  .title-input:focus{outline:none;}
+  .sub-input{
+    font-family:var(--serif); font-style:italic; font-size:17px; color:var(--ink-dim);
+    background:transparent; border:none; width:100%; padding:0; margin:0 0 20px; resize:none;
+  }
+  .sub-input::placeholder{color:var(--ink-faint);}
+  .sub-input:focus{outline:none;}
+  .hero-meta{display:flex; flex-wrap:wrap; gap:10px 22px; font-family:var(--mono); font-size:12px; color:var(--ink-faint);}
+  .hero-meta b{color:var(--ink-dim); font-weight:500;}
+  .howto{
+    margin-top:18px; font-size:13px; color:var(--ink-dim); max-width:65ch; line-height:1.6;
+    border-left:2px solid var(--key-dim); padding-left:14px;
+  }
+
+  section{max-width:920px; margin:0 auto; padding:0 24px;}
+
+  .timeline-wrap{position:sticky; top:0; z-index:30; background:rgba(11,9,6,0.94); backdrop-filter:blur(6px); border-bottom:1px solid var(--line-bright); padding:10px 24px 12px;}
+  .timeline-inner{max-width:920px; margin:0 auto;}
+  .timeline-title{font-family:var(--mono); font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px; display:flex; justify-content:space-between;}
+  .timeline-title span:last-child{color:var(--ink-dim);}
+  .tl-track{display:flex; height:24px; border-radius:2px; overflow:hidden; margin-bottom:8px; background:var(--bg-inset);}
+  .tl-seg{height:100%; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; color:rgba(11,9,6,0.75); font-weight:600; border-right:1px solid rgba(11,9,6,0.5); cursor:pointer; transition:filter .15s ease; white-space:nowrap; overflow:hidden;}
+  .tl-seg:hover{filter:brightness(1.18);}
+  .tl-empty{color:var(--ink-faint); font-family:var(--mono); font-size:11px; padding:4px 2px;}
+  .eng-i2v{background:var(--key);} .eng-mc{background:var(--velvet-bright);} .eng-still{background:var(--shadow-green);} .eng-other{background:var(--other);}
+  .tl-legend{display:flex; flex-wrap:wrap; gap:14px; font-family:var(--mono); font-size:10px; color:var(--ink-faint);}
+  .tl-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .tl-legend i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+
+  .shots{margin-top:36px; padding-bottom:20px;}
+  .section-label{font-family:var(--mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink-faint);}
+  .shots-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:18px;}
+  .shots-head h2{font-family:var(--serif); font-weight:500; font-size:24px; margin:2px 0 0;}
+
+  .shot-card{background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:18px; overflow:hidden;}
+  .shot-head{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg, rgba(207,145,83,0.05), transparent);}
+  .shot-num{font-family:var(--mono); font-size:12px; color:var(--key);}
+  .head-controls{display:flex; gap:6px; align-items:center;}
+  .icon-btn{
+    font-family:var(--mono); font-size:12px; background:var(--bg-inset); color:var(--ink-dim);
+    border:1px solid var(--line-bright); border-radius:2px; padding:6px 9px; cursor:pointer;
+  }
+  .icon-btn:hover{border-color:var(--key); color:var(--key);}
+  .icon-btn.danger:hover{border-color:var(--velvet-bright); color:var(--velvet-bright);}
+
+  .shot-body{padding:18px;}
+  .row{display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:10px; margin-bottom:12px;}
+  label{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:5px;}
+  input[type=text], input[type=number], select, textarea{
+    width:100%; background:var(--bg-inset); border:1px solid var(--line-bright); border-radius:2px;
+    color:var(--ink); font-family:var(--sans); font-size:13.5px; padding:9px 10px; line-height:1.4;
+  }
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--key-dim);}
+  textarea{font-family:var(--mono); font-size:12.5px; min-height:64px; resize:vertical; line-height:1.6;}
+  textarea.commentary-f{font-family:var(--serif); font-style:italic; font-size:14px;}
+  .field{margin-bottom:12px;}
+  .field.small{margin-bottom:0;}
+
+  .shot-actions{display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;}
+  button{font-family:var(--mono); font-size:11px; letter-spacing:0.03em; background:var(--bg-inset); color:var(--ink-dim); border:1px solid var(--line-bright); padding:9px 14px; border-radius:2px; cursor:pointer; transition:all .15s ease;}
+  button:hover{border-color:var(--key); color:var(--key);}
+  button:focus-visible{outline:2px solid var(--key); outline-offset:2px;}
+  button.primary{background:var(--key-dim); color:var(--ink); border-color:var(--key-dim);}
+  button.primary:hover{background:var(--key); color:var(--bg); border-color:var(--key);}
+
+  .add-shot-row{display:flex; justify-content:center; margin:20px 0 8px;}
+  .add-shot-row button{padding:12px 28px; font-size:12px;}
+
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--ink-faint); font-family:var(--serif); font-style:italic; font-size:16px;
+    border:1px dashed var(--line-bright); border-radius:var(--radius);
+  }
+
+  .toolbar{margin-top:52px; padding-bottom:70px;}
+  .toolbar-actions{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .toolbar-note{font-size:12.5px; color:var(--ink-faint); max-width:65ch; line-height:1.6;}
+  #importFile{display:none;}
+
+  footer{max-width:920px; margin:0 auto; padding:24px 24px 60px; color:var(--ink-faint); font-family:var(--mono); font-size:11px; border-top:1px solid var(--line);}
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Reel Engine</div>
+    <input class="title-input" id="titleInput" placeholder="Untitled Film" />
+    <textarea class="sub-input" id="subInput" rows="1" placeholder="One-line logline..."></textarea>
+    <div class="hero-meta">
+      <span><b id="metaRuntime">0:00</b> runtime</span>
+      <span><b id="metaCount">0</b> shots</span>
+    </div>
+    <div class="howto">
+      Click <b style="color:var(--key)">+ Add shot</b> below and fill in whatever fields you use — frame, motion,
+      negative, or your own. Nothing here is pre-written. Export saves your work as a JSON file you can
+      re-import anytime, on any computer, to keep editing.
+    </div>
+  </div>
+
+  <div class="timeline-wrap">
+    <div class="timeline-inner">
+      <div class="timeline-title"><span id="tlLabel">Timeline</span><span>click a shot to jump</span></div>
+      <div class="tl-track" id="tlShots"></div>
+      <div class="tl-legend">
+        <span><i style="background:var(--key)"></i>I2V</span>
+        <span><i style="background:var(--velvet-bright)"></i>Motion Control</span>
+        <span><i style="background:var(--shadow-green)"></i>Still</span>
+        <span><i style="background:var(--other)"></i>Other</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="shots">
+    <div class="shots-head">
+      <div>
+        <div class="section-label">Shots</div>
+        <h2>Build your list</h2>
+      </div>
+    </div>
+    <div id="shotList"></div>
+    <div class="add-shot-row"><button class="primary" id="addShotBtn">+ Add shot</button></div>
+  </section>
+
+  <section class="toolbar">
+    <div class="section-label">Save &amp; Share</div>
+    <h2 style="font-family:var(--serif); font-weight:500; font-size:24px; margin:2px 0 14px;">Export, import, reset</h2>
+    <div class="toolbar-actions">
+      <button class="primary" id="exportJson">↓ Export as JSON</button>
+      <button id="importBtn">↑ Import JSON</button>
+      <input type="file" id="importFile" accept="application/json">
+      <button id="exportPrompts">↓ Export all prompts as .txt</button>
+      <button id="resetAll">Clear everything</button>
+    </div>
+    <p class="toolbar-note">
+      Your work saves automatically to this browser as you type, tied to this exact file. To hand this off to
+      someone else, or move to a different computer, use Export — they open this same blank page and use Import
+      to load your JSON straight back in.
+    </p>
+  </section>
+
+  <footer>Nothing here is sent anywhere. All data stays in this file and this browser until you export it.</footer>
+
+<script>
+const ENGINES = [
+  {v:"I2V", label:"Kling I2V", cls:"eng-i2v"},
+  {v:"MC", label:"Motion Control", cls:"eng-mc"},
+  {v:"STILL", label:"Still", cls:"eng-still"},
+  {v:"OTHER", label:"Other", cls:"eng-other"}
+];
+const engineMeta = v => ENGINES.find(e=>e.v===v) || ENGINES[3];
+
+const STORAGE_KEY = "reel_engine:state";
+
+let state = loadState() || {
+  title:"", subtitle:"",
+  shots:[ blankShot("Example — edit or delete this") ]
+};
+
+function blankShot(title){
+  return {
+    title:title||"", beat:"", dur:5, engine:"I2V", cameraType:"", lens:"",
+    frame:"", start:"", end:"", motion:"", neg:"", commentary:"", notes:""
+  };
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){ /* storage blocked */ }
+}
+
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = Math.floor(sec%60);
+  return m + ":" + String(s).padStart(2,'0');
+}
+
+function totalDuration(){ return state.shots.reduce((a,s)=>a + (Number(s.dur)||0), 0); }
+
+function renderHeader(){
+  document.getElementById('titleInput').value = state.title;
+  document.getElementById('subInput').value = state.subtitle;
+  document.getElementById('metaRuntime').textContent = fmtTime(totalDuration());
+  document.getElementById('metaCount').textContent = state.shots.length;
+}
+
+function renderTimeline(){
+  const total = totalDuration();
+  const wrap = document.getElementById('tlShots');
+  if(!state.shots.length || total===0){
+    wrap.innerHTML = '<div class="tl-empty">Add a shot to see the timeline build here.</div>';
+    return;
+  }
+  wrap.innerHTML = state.shots.map((s,i)=>{
+    const eng = engineMeta(s.engine);
+    const w = Math.max((Number(s.dur)||0)/total*100, 2);
+    return '<div class="tl-seg ' + eng.cls + '" style="width:' + w + '%" data-jump="' + i + '" title="Shot ' + (i+1) + ' — ' + (s.title||'untitled') + ' (' + s.dur + 's)">' + (i+1) + '</div>';
+  }).join('');
+  wrap.querySelectorAll('.tl-seg').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const card = document.getElementById('shot-'+el.dataset.jump);
+      if(card) card.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+}
+
+function fieldRow(index, key, val, opts){
+  opts = opts || {};
+  const id = 'f-' + index + '-' + key;
+  if(opts.type==='select'){
+    return '<div class="field ' + (opts.small?'small':'') + '"><label for="'+id+'">'+opts.label+'</label>' +
+      '<select id="'+id+'" data-index="'+index+'" data-field="'+key+'">' +
+      ENGINES.map(e=>'<option value="'+e.v+'" '+(e.v===val?'selected':'')+'>'+e.label+'</option>').join('') +
+      '</select></div>';
+  }
+  if(opts.type==='number'){
+    return '<div class="field ' + (opts.small?'small':'') + '"><label for="'+id+'">'+opts.label+'</label>' +
+      '<input type="number" min="0" step="0.5" id="'+id+'" data-index="'+index+'" data-field="'+key+'" value="'+val+'"></div>';
+  }
+  if(opts.type==='textarea'){
+    return '<div class="field"><label for="'+id+'">'+opts.label+'</label>' +
+      '<textarea id="'+id+'" data-index="'+index+'" data-field="'+key+'" class="'+(opts.cls||'')+'" placeholder="'+(opts.placeholder||'')+'">'+(val||'')+'</textarea></div>';
+  }
+  return '<div class="field ' + (opts.small?'small':'') + '"><label for="'+id+'">'+opts.label+'</label>' +
+    '<input type="text" id="'+id+'" data-index="'+index+'" data-field="'+key+'" value="'+(val||'')+'" placeholder="'+(opts.placeholder||'')+'"></div>';
+}
+
+function shotCardHtml(s, i){
+  return `
+  <div class="shot-card" id="shot-${i}">
+    <div class="shot-head">
+      <span class="shot-num">SHOT ${String(i+1).padStart(2,'0')}</span>
+      <div class="head-controls">
+        <button class="icon-btn" data-move="${i}" data-dir="-1" title="Move up" ${i===0?'disabled':''}>↑</button>
+        <button class="icon-btn" data-move="${i}" data-dir="1" title="Move down" ${i===state.shots.length-1?'disabled':''}>↓</button>
+        <button class="icon-btn danger" data-delete="${i}" title="Delete shot">✕</button>
+      </div>
+    </div>
+    <div class="shot-body">
+      <div class="row">
+        ${fieldRow(i,'title',s.title,{label:'Title', placeholder:'e.g. The Trigger'})}
+        ${fieldRow(i,'beat',s.beat,{label:'Beat', placeholder:'e.g. Beat 2'})}
+        ${fieldRow(i,'dur',s.dur,{label:'Duration (s)', type:'number', small:true})}
+        ${fieldRow(i,'engine',s.engine,{label:'Engine', type:'select'})}
+      </div>
+      <div class="row">
+        ${fieldRow(i,'cameraType',s.cameraType,{label:'Camera / shot type', placeholder:'e.g. locked, desk-height, side profile'})}
+        ${fieldRow(i,'lens',s.lens,{label:'Lens', placeholder:'e.g. 50mm equivalent'})}
+      </div>
+      ${fieldRow(i,'frame',s.frame,{label:'Frame / character image', type:'textarea', placeholder:'Full still-frame description...'})}
+      ${fieldRow(i,'start',s.start,{label:'Start frame', type:'textarea', placeholder:'Leave blank if using a single frame above'})}
+      ${fieldRow(i,'end',s.end,{label:'End frame', type:'textarea'})}
+      ${fieldRow(i,'motion',s.motion,{label:'Motion', type:'textarea', placeholder:'One camera instruction, one subject instruction'})}
+      ${fieldRow(i,'neg',s.neg,{label:'Negative', type:'textarea', placeholder:'What must not happen'})}
+      ${fieldRow(i,'commentary',s.commentary,{label:"Director's commentary", type:'textarea', cls:'commentary-f', placeholder:'Why this shot, what it needs to do'})}
+      <div class="shot-actions">
+        <button class="primary" data-copy="${i}">Copy full prompt block</button>
+      </div>
+      ${fieldRow(i,'notes',s.notes,{label:'Working notes', type:'textarea', placeholder:'Takes, what to re-roll, anything you want to remember'})}
+    </div>
+  </div>`;
+}
+
+function renderShots(){
+  const list = document.getElementById('shotList');
+  if(!state.shots.length){
+    list.innerHTML = '<div class="empty-state">No shots yet. Click "+ Add shot" to start.</div>';
+  } else {
+    list.innerHTML = state.shots.map(shotCardHtml).join('');
+  }
+  bindFieldEvents();
+  bindCardButtons();
+  renderTimeline();
+  renderHeader();
+}
+
+function bindFieldEvents(){
+  document.querySelectorAll('#shotList [data-field]').forEach(el=>{
+    el.addEventListener('input', ()=>{
+      const i = Number(el.dataset.index), key = el.dataset.field;
+      state.shots[i][key] = el.type==='number' ? Number(el.value) : el.value;
+      renderTimeline();
+      renderHeader();
+      saveState();
+    });
+  });
+}
+
+function bindCardButtons(){
+  document.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const s = state.shots[Number(btn.dataset.copy)];
+      try{
+        await navigator.clipboard.writeText(buildPromptBlock(s, Number(btn.dataset.copy)+1));
+        btn.textContent = "Copied ✓";
+        setTimeout(()=>btn.textContent="Copy full prompt block", 1500);
+      }catch(e){
+        btn.textContent = "Copy failed — select manually";
+        setTimeout(()=>btn.textContent="Copy full prompt block", 1800);
+      }
+    });
+  });
+  document.querySelectorAll('[data-delete]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = Number(btn.dataset.delete);
+      if(confirm('Delete Shot ' + (i+1) + '? This cannot be undone.')){
+        state.shots.splice(i,1);
+        renderShots();
+        saveState();
+      }
+    });
+  });
+  document.querySelectorAll('[data-move]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const i = Number(btn.dataset.move), dir = Number(btn.dataset.dir), j = i+dir;
+      if(j<0 || j>=state.shots.length) return;
+      const tmp = state.shots[i];
+      state.shots[i] = state.shots[j];
+      state.shots[j] = tmp;
+      renderShots();
+      saveState();
+    });
+  });
+}
+
+function buildPromptBlock(s, num){
+  const eng = engineMeta(s.engine).label;
+  let out = 'SHOT ' + num + ' · ' + (s.title||'untitled') + ' · ' + s.dur + 's · ' + eng + '\n\n';
+  if(s.frame) out += 'FRAME\n' + s.frame + '\n\n';
+  if(s.start) out += 'START\n' + s.start + '\n\n';
+  if(s.end)   out += 'END\n' + s.end + '\n\n';
+  if(s.motion)out += 'MOTION\n' + s.motion + '\n\n';
+  if(s.neg)   out += 'NEGATIVE\n' + s.neg + '\n';
+  return out;
+}
+
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], {type:type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('titleInput').addEventListener('input', e=>{ state.title = e.target.value; saveState(); });
+document.getElementById('subInput').addEventListener('input', e=>{ state.subtitle = e.target.value; saveState(); });
+
+document.getElementById('addShotBtn').addEventListener('click', ()=>{
+  state.shots.push(blankShot());
+  renderShots();
+  saveState();
+  const last = document.getElementById('shot-'+(state.shots.length-1));
+  if(last) last.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('exportJson').addEventListener('click', ()=>{
+  const name = (state.title || 'script').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || 'script';
+  downloadBlob(JSON.stringify(state, null, 2), name + '_shots.json', 'application/json');
+});
+document.getElementById('exportPrompts').addEventListener('click', ()=>{
+  const all = state.shots.map((s,i)=>buildPromptBlock(s,i+1)).join('\n' + '─'.repeat(60) + '\n\n');
+  downloadBlob(all, 'prompts.txt', 'text/plain');
+});
+document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(!parsed || !Array.isArray(parsed.shots)) throw new Error('bad shape');
+      state = { title: parsed.title||'', subtitle: parsed.subtitle||'', shots: parsed.shots };
+      renderShots();
+      saveState();
+    }catch(err){
+      alert('Could not read that file — make sure it is a JSON file exported from this tool.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+document.getElementById('resetAll').addEventListener('click', ()=>{
+  if(!confirm('Clear the title, logline, and every shot? This cannot be undone.')) return;
+  state = { title:"", subtitle:"", shots:[] };
+  renderShots();
+  saveState();
+});
+
+renderShots();
+</script>
+</body>
+</html>
