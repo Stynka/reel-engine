@@ -4,10 +4,7 @@ A blank, browser-based shot-list builder for AI video. Add shots, fill in
 frame/motion/negative prompts, export as JSON. No account, no install,
 nothing leaves your browser.
 
-**Open it:**
-
-- **[GitHub Pages](https://github.com/Stynka/reel-engine)** - no login needed
-- **[Claude.ai](https://claude.ai)** - requires Claude account (free or paid)
+**[Open it: https://stynka.github.io/reel-engine/](https://stynka.github.io/reel-engine/)**
 
 ---
 
@@ -54,17 +51,3 @@ To host it as a shareable link with GitHub Pages:
 2. Settings > Pages > Deploy from branch > `main` / root > Save
 3. Your URL appears at the top of that Pages settings page after about a
    minute
-
----
-
-## Accessing on Claude.ai
-
-To use reel-engine directly in Claude:
-
-1. Visit https://claude.ai
-2. Start a new conversation
-3. Upload the `index.html` file
-4. Claude will render it so you can build your shot list in chat
-
-You need a Claude account (free or paid) to do this. The GitHub Pages version
-above works in any browser with no login.
